@@ -1,0 +1,14 @@
+[
+  {
+    "email": "jaime@gmail.com",
+    "names": "Jaime chavez",
+    "password": "12345",
+    "rol": "admin"
+  },
+  {
+    "email": "chavez@gmail.com",
+    "name": "Prueba Admin",
+    "password": "12345",
+    "rol": "user"
+  }
+]
