@@ -34,6 +34,12 @@
                     {{ buttonText }}
                   </button>
                 </div>
+                <div class="d-grid gap-2 col-12 mx-auto mt-2">
+                  <button class="btn btn-link btn-lg" style="border-radius: 20px; color: #041688;" type="submit"
+                    @click="syncUsers">
+                    Sincronizar usuarios con NS
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -55,8 +61,9 @@ export default {
   name: "LoginView",
   components: {},
   setup() {
+    const urlApi = process.env.VUE_APP_URL_API_LOCAL;
     const store = useStore();
-    let loader = ref(true);
+    let loader = ref(false);
     let formData = ref({});
     let email = ref("");
     let buttonText = ref("Iniciar Sesión")
@@ -64,12 +71,13 @@ export default {
     const user = ref(computed(() => store.state.user));
 
     onMounted(() => {
-      console.log("cargando");
-      syncUsers();
+      /* console.log("cargando");
+      syncUsers(); */
     });
 
     const syncUsers = async () => {
-      await axios.post('http://127.0.0.1:3000/api/mongo/employees/new', {})
+      loader.value = true;
+      await axios.post(`${urlApi}/api/mongo/employees/new`, {})
         .then(function (response) {
           loader.value = false;
           showAlert();
@@ -77,6 +85,7 @@ export default {
         })
         .catch(function (error) {
           console.log(error);
+          loader.value = false;
         });
     }
 
@@ -89,7 +98,7 @@ export default {
         email: formData.value.email,
         custentity_fc_password_integration: formData.value.password
       }
-      await axios.post('http://127.0.0.1:3000/api/mongo/login', objApiForm)
+      await axios.post(`${urlApi}/api/mongo/login`, objApiForm)
         .then(function (response) {
           console.log("login", response.data.Employee);
           objUser = response.data.Employee;
@@ -108,6 +117,7 @@ export default {
 
     return {
       handleClickLogin,
+      syncUsers,
       formData,
       email,
       loader,

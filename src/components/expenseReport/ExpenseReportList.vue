@@ -22,8 +22,14 @@
 		</div>
 		<div v-if="!loader && !loader_report">
 			<div class="row">
-				<div class="col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xxl-12">
+				<div class="col-sm-12 col-md-12 col-lg-6 col-xl-6 col-xxl-6">
 					<h2><font-awesome-icon icon="fa-solid fa-money-bill-1-wave" /> Reporte de gastos</h2>
+				</div>
+				<div class="col-sm-12 col-md-12 col-lg-6 col-xl-6 col-xxl-6 justify-content-end text-end">
+					<!-- <button class="btn btn-link" @click="getListExpenseReports" style="color: #041688;"><font-awesome-icon
+							icon="fa-solid fa-rotate" class="me-1" />
+						Sincronizar reportes de
+						gastos</button> -->
 				</div>
 			</div>
 			<div class="row mt-3">
@@ -40,8 +46,20 @@
 										<select class="form-select" name="txtEmpleado" aria-label="Default select example"
 											@change="filterEmployees" v-model="selectedFilterEmployee">
 											<option selected value="0">Todos</option>
-											<option :value="employee.entityid" v-for="employee in listEmployees"
+											<option :value="employee.internalid" v-for="employee in listEmployees"
 												:key="employee.internalid">{{ employee.entityid }}</option>
+										</select>
+									</div>
+								</div>
+								<div class="col-sm-12 col-md-2 col-lg-2 col-xl-2 col-xxl-2">
+									<div class="inputControl">
+										<label for="txtEmpleado">Estatus</label>
+										<select class="form-select" name="txtEmpleado" aria-label="Default select example"
+											@change="filterStatus" v-model="selectedFilterEstatus">
+											<option selected value="0">Todos</option>
+											<option value="1">PENDING SUPERVISOR APPROVAL</option>
+											<option value="2">PENDING ACCOUNTING APPROVAL</option>
+											<!-- <option selected value="3">REJECT</option> -->
 										</select>
 									</div>
 								</div>
@@ -75,8 +93,7 @@
 									<button class="btn btn-primary" style="margin-top: 4%; margin-right: 10px;"
 										@click="filterList"><font-awesome-icon icon="fa-solid fa-magnifying-glass"
 											class="me-1" /> Filtrar</button>
-									<button class="btn btn-primary" style="margin-top: 4%;"
-										v-if="userObj.internalid === 454"
+									<button class="btn btn-primary" style="margin-top: 4%; margin-right: 10px;"
 										@click="handleClickNewExpenseReport"><font-awesome-icon
 											icon="fa-solid fa-circle-plus" class="me-1" /> Nuevo reporte de
 										gastos</button>
@@ -114,7 +131,7 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xxl-12 table-responsive">
-					<table class="table">
+					<table class="table table-striped table-bordered">
 						<thead style="background: #e5e5e5">
 							<tr>
 								<th scope="col" class="text-center"></th>
@@ -123,28 +140,45 @@
 								<th scope="col" class="text-center">EMPLEADO</th>
 								<th scope="col" class="text-center">IDENTIFICADOR</th>
 								<th scope="col" class="text-center">FECHA</th>
-								<th scope="col" class="text-center">TOTAL</th>
+								<!-- <th scope="col" class="text-center">TOTAL</th> -->
 								<th scope="col" class="text-center">ESTATUS</th>
 								<th scope="col" class="text-center">NOTA</th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr v-for="(report, index) in listReports" :key="report.internalid">
-								<td scope="row" class="text-center">{{ index + 1 }}</td>
-								<th class="btn-ver" @click="handleClickList(report.internalid)">VER</th>
-								<td class="text-center">{{ report.internalid }}</td>
-								<td class="text-center">{{ report.entity }}</td>
-								<td class="text-center">{{ report.transactionnumber }}</td>
-								<td class="text-center">{{ report.trandate }}</td>
-								<td class="text-center">${{ report.amount }}</td>
-								<td class="text-center">
+								<td scope="row" class="text-center"
+									v-if="report.entity_id === userObj.internalid || report.supervisor === userObj.internalid">
+									{{ index + 1 }}</td>
+								<th class="btn-ver" @click="handleClickList(report.internalid)"
+									v-if="report.entity_id === userObj.internalid || report.supervisor === userObj.internalid">
+									VER</th>
+								<td class="text-center"
+									v-if="report.entity_id === userObj.internalid || report.supervisor === userObj.internalid">
+									{{ report.internalid }}</td>
+								<td class="text-center"
+									v-if="report.entity_id === userObj.internalid || report.supervisor === userObj.internalid">
+									{{ report.entity }}</td>
+								<td class="text-center"
+									v-if="report.entity_id === userObj.internalid || report.supervisor === userObj.internalid">
+									{{ report.transactionnumber }}</td>
+								<td class="text-center"
+									v-if="report.entity_id === userObj.internalid || report.supervisor === userObj.internalid">
+									{{ report.trandate }}</td>
+								<!-- <td class="text-center"
+									v-if="report.entity_id === userObj.internalid || report.supervisor === userObj.internalid">
+									${{ report.amount }}</td> -->
+								<td class="text-center"
+									v-if="report.entity_id === userObj.internalid || report.supervisor === userObj.internalid">
 									<span class="badge rounded-pill"
-										:class="{ 'bg-success': report.statusref === 'approvedByAcctOverride', 'bg-secondary': report.statusref === 'pendingSupApproval', 'bg-warning': report.statusref === 'pendingAcctApproval' }"
+										:class="{ 'bg-success': report.statusref === 'approvedByAcctOverride', 'bg-info': report.statusref === 'approvedByAcct', 'bg-secondary': report.statusref === 'pendingSupApproval', 'bg-warning': report.statusref === 'pendingAcctApproval', 'bg-danger': report.cancelacion }"
 										style="font-size: 16px; width: 250px;">
-										{{ report.statusref }}
+										{{ report.cancelacion ? "Rechazado" : report.statusref }}
 									</span>
 								</td>
-								<td class="text-center">{{ report.memo }}</td>
+								<td class="text-center"
+									v-if="report.entity_id === userObj.internalid || report.supervisor === userObj.internalid">
+									{{ report.memo }}</td>
 							</tr>
 						</tbody>
 					</table>
@@ -157,29 +191,29 @@
 <script>
 import { ref } from "vue";
 import { useStore } from "vuex";
-import { computed, onMounted } from "@vue/runtime-core";
+import { computed, onMounted, onBeforeMount } from "@vue/runtime-core";
 import axios from 'axios';
 
 export default {
 	name: "ExpenseReportList",
 	setup(props) {
+		const urlApi = process.env.VUE_APP_URL_API_LOCAL;
 		const store = useStore();
 		const showList = ref(computed(() => store.state.showList));
 		const obj = ref(computed(() => store.state.infoList));
 		const userObj = ref(computed(() => store.state.user));
 		const listReports = ref(computed(() => store.state.objListReports));
 		const listEmployees = ref(computed(() => store.state.infoEmployees));
-		const loader = ref(true);
+		const loader = ref(false);
 		const loader_report = ref(false);
 		const selectedFilterEmployee = ref("0");
+		const selectedFilterEstatus = ref("0");
 		const selectedFilterOrdenacion = ref("0");
 		const startDateFilter = ref("");
 		const finishDateFilter = ref("");
 
 		onMounted(() => {
-			console.log("cargando");
-			console.log("userObj", userObj);
-			getListExpenseReports();
+			getListReports();
 		});
 
 		const handleClickList = async (id) => {
@@ -187,7 +221,7 @@ export default {
 			const id_tran = id;
 			let obj_data = [];
 
-			await axios.post('http://127.0.0.1:3000/api/mongo/report', { "id_busqueda": id_tran })
+			await axios.post(`${urlApi}/api/mongo/report`, { "id_busqueda": id_tran })
 				.then(function (response) {
 					console.log(response.data.Report[0]);
 					obj_data.push(response.data.Report[0]);
@@ -236,12 +270,12 @@ export default {
 			store.commit("setShowNewExpenseReport");
 		};
 
-		const getListExpenseReports = async () => {
+		const getListReports = async () => {
 			loader.value = true;
 			let objReports = undefined;
 			let obj_data_employees = [];
 
-			await axios.get('http://127.0.0.1:3000/api/mongo/employees')
+			await axios.get(`${urlApi}/api/mongo/employees`)
 				.then(function (response) {
 					console.log(response.data.Employees);
 					obj_data_employees.push(response.data.Employees);
@@ -252,7 +286,35 @@ export default {
 					console.log(error);
 				});
 
-			await axios.post('http://127.0.0.1:3000/api/mongo/reports/new', {})
+			await axios.get(`${urlApi}/api/mongo/report/list`, {})
+				.then(function (response) {
+					console.log(response.data.Reports);
+					objReports = response.data.Reports;
+					store.commit("setListReport", objReports);
+				})
+				.catch(function (error) {
+					console.log(error);
+				});
+			loader.value = false;
+		}
+
+		const getListExpenseReports = async () => {
+			loader.value = true;
+			let objReports = undefined;
+			let obj_data_employees = [];
+
+			await axios.get(`${urlApi}/api/mongo/employees`)
+				.then(function (response) {
+					console.log(response.data.Employees);
+					obj_data_employees.push(response.data.Employees);
+					store.commit("setEmployeesList", obj_data_employees[0]);
+					console.log("list employees", listEmployees.value);
+				})
+				.catch(function (error) {
+					console.log(error);
+				});
+
+			await axios.post(`${urlApi}/api/mongo/reports/new`, {})
 				.then(function (response) {
 					console.log(response.data.Reports);
 					objReports = response.data.Reports;
@@ -268,17 +330,12 @@ export default {
 			const entity = e.target.value;
 			selectedFilterEmployee.value = entity;
 			console.log(selectedFilterEmployee.value);
+		}
 
-			/* let objReports = undefined;
-			await axios.get(`http://127.0.0.1:3000/api/mongo/report/filter/employee/${entity}`)
-				.then(function (response) {
-					console.log(response.data.Reports);
-					objReports = response.data.Reports;
-					store.commit("setListReport", objReports);
-				})
-				.catch(function (error) {
-					console.log(error);
-				}); */
+		const filterStatus = async (e) => {
+			const entity = e.target.value;
+			selectedFilterEstatus.value = entity;
+			console.log(selectedFilterEstatus.value);
 		}
 
 		const filterOrdenacion = async (e) => {
@@ -286,6 +343,7 @@ export default {
 			let starDate = `${startDateFilter.value}T05:00:00`;
 			let finishDate = `${finishDateFilter.value}T05:00:00`;
 			const entity = selectedFilterEmployee.value;
+			const estatus = selectedFilterEstatus.value;
 			selectedFilterOrdenacion.value = ord;
 			console.log(selectedFilterOrdenacion.value);
 
@@ -297,7 +355,7 @@ export default {
 			}
 
 			let objReports = undefined;
-			await axios.get(`http://127.0.0.1:3000/api/mongo/report/filter/employee/${ord}/${entity}/${starDate}/${finishDate}`)
+			await axios.get(`${urlApi}/api/mongo/report/filter/employee/${ord}/${entity}/${starDate}/${finishDate}/${estatus}`)
 				.then(function (response) {
 					console.log(response.data.Reports);
 					objReports = response.data.Reports;
@@ -313,6 +371,7 @@ export default {
 			let starDate = `${startDateFilter.value}T05:00:00`;
 			let finishDate = `${finishDateFilter.value}T05:00:00`;
 			const entity = selectedFilterEmployee.value;
+			const estatus = selectedFilterEstatus.value;
 
 			if (startDateFilter.value == "") {
 				starDate = "0001-01-01T05:00:00";
@@ -322,7 +381,7 @@ export default {
 			}
 
 			let objReports = undefined;
-			await axios.get(`http://127.0.0.1:3000/api/mongo/report/filter/employee/${ord}/${entity}/${starDate}/${finishDate}`)
+			await axios.get(`${urlApi}/api/mongo/report/filter/employee/${ord}/${entity}/${starDate}/${finishDate}/${estatus}`)
 				.then(function (response) {
 					console.log(response.data.Reports);
 					objReports = response.data.Reports;
@@ -339,6 +398,8 @@ export default {
 			filterEmployees,
 			filterOrdenacion,
 			filterList,
+			getListExpenseReports,
+			filterStatus,
 			userObj,
 			listReports,
 			loader,
@@ -346,6 +407,7 @@ export default {
 			listEmployees,
 			selectedFilterEmployee,
 			selectedFilterOrdenacion,
+			selectedFilterEstatus,
 			startDateFilter,
 			finishDateFilter,
 		}

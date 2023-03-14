@@ -10,6 +10,7 @@ export default createStore({
     showList: true,
     showEditExpenseReport: false,
     showNewExpenseReport: false,
+    showSyncComponent: false,
     infoList: [],
     infoEmployees: [],
     objListReports: [],
@@ -17,6 +18,9 @@ export default createStore({
   getters: {
   },
   mutations: {
+    setExit(state, payload) {
+      state.user = undefined;
+    },
     setListReport(state, payload) {
       state.objListReports = payload;
       console.log("payload reports", state.objListReports);
@@ -36,10 +40,12 @@ export default createStore({
       state.showList = !state.showList;
       state.showNewExpenseReport = false;
       state.showEditExpenseReport = false;
+      state.showSyncComponent = false;
     },
     setShowEditExpenseReport(state, payload) {
       state.showList = false;
       state.showNewExpenseReport = false;
+      state.showSyncComponent = false;
       state.showEditExpenseReport = true;
       state.infoList = payload;
     },
@@ -49,6 +55,13 @@ export default createStore({
     setShowNewExpenseReport(state, payload) {
       state.showList = false;
       state.showNewExpenseReport = true;
+      state.showEditExpenseReport = false;
+      state.showSyncComponent = false;
+    },
+    setShowSyncComponent(state, payload) {
+      state.showSyncComponent = true;
+      state.showList = false;
+      state.showNewExpenseReport = false;
       state.showEditExpenseReport = false;
     }
   },

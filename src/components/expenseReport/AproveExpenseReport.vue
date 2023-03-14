@@ -23,14 +23,29 @@
 		</div>
 		<div class="row">
 			<div class="col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xxl-12">
-				<button type="button" class="btn btn-primary btn-aprobar" :class="{ disabled: loader_aprovee }"
-					v-if="userObj.internalid === 454" @click="updateReport(obj_data.internalid)"><font-awesome-icon
-						icon="fa-solid fa-check" class="me-1" v-if="!loader_aprovee" />
-					<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
-						v-if="loader_aprovee"></span>
-					{{ button_aprovee }}</button>
+				<div class="mb-3" v-if="!obj_data.anticipo">
+					<button type="button" class="btn btn-primary btn-aprobar"
+						:class="{ disabled: loader_aprovee || obj_data.status == 'Pending Accounting Approval' || obj_data.cancelacion }"
+						v-show="userObj.internalid != obj_data.entity_id && !obj_data.cancelacion"
+						@click="updateReport(obj_data.internalid)"><font-awesome-icon icon="fa-solid fa-check" class="me-1"
+							v-if="!loader_aprovee" />
+						<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
+							v-if="loader_aprovee"></span>
+						{{ obj_data.status == 'Pending Accounting Approval' ? "Aprobado" : button_aprovee }}</button>
+
+					<button type="button" class="btn btn-danger btn-rechazar"
+						:class="{ disabled: loader_rechazar || obj_data.cancelacion }"
+						v-if="userObj.internalid != obj_data.entity_id"
+						v-show="obj_data.status != 'Pending Accounting Approval'"
+						@click="handleRejectExpense(obj_data.internalid)"><font-awesome-icon icon="fa-solid fa-xmark"
+							class="me-1" v-if="!loader_rechazar" />
+						<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
+							v-if="loader_rechazar"></span>
+						{{ obj_data.cancelacion ? "Rechazado" : button_rechazar }}</button>
+				</div>
+
 				<button type="button" class="btn btn-light btn-cancelar"
-					@click="handleClickCancel"><strong>Cancelar</strong></button>
+					@click="handleClickCancel"><strong>Salir</strong></button>
 			</div>
 		</div>
 		<div class="row mt-3">
@@ -66,8 +81,11 @@
 								</div>
 								<div class="inputControl mt-2">
 									<label for="txtnAME" class="form-label">Documento Adicional</label>
-									<input type="text" class="form-control input-style" v-model="obj_data.documento"
-										disabled />
+									<a :href="obj_data.urlDocumentoAdicional" class="form-control input-style-link"
+										target="__blank">{{
+											obj_data.nameDocumentoAdicional }}</a>
+									<!-- <input type="text" class="form-control input-style" v-model="obj_data.documento"
+										disabled /> -->
 								</div>
 								<div class="inputControl mt-2">
 									<label for="txtnAME" class="form-label">Estado</label>
@@ -76,8 +94,14 @@
 								</div>
 								<div class="inputControl mt-2 center-nota">
 									<label for="txtnAME" class="form-label">Nota de Aprobación</label>
-									<textarea class="form-control input-style" rows="3"
-										v-model="obj_data.custbody_fc_nota_aprobacion" disabled></textarea>
+									<textarea class="form-control input-style-aprobacion" rows="3"
+										v-model="obj_data.custbody_fc_nota_aprobacion"></textarea>
+								</div>
+								<div class="form-check mt-2">
+									<input class="form-check-input" type="checkbox" v-model="obj_data.anticipo" disabled>
+									<label class="form-check-label" for="flexCheckDefault">
+										Anticipo aplicado
+									</label>
 								</div>
 							</div>
 							<div class="col-sm-12 col-md-12 col-lg-4 col-xl-4 col-xxl-4">
@@ -106,7 +130,7 @@
 	</div>
 	<div class="row">
 		<div class="col-sm-12 col-md-12 col-lg-12 col-xl-12 col-xxl-12 table-responsive">
-			<table class="table tamaño-table">
+			<table class="table table-striped table-bordered tamaño-table text-center">
 				<thead style="background: #e5e5e5">
 					<tr>
 						<th scope="col"></th>
@@ -118,25 +142,31 @@
 						<th scope="col">IMPUESTO</th>
 						<th scope="col">TOTAL</th>
 						<th scope="col">NOTA</th>
-						<th scope="col">PDF</th>
-						<th scope="col">XML</th>
+						<th scope="col"><font-awesome-icon icon="fa-solid fa-file-pdf" class="icon-header-table icon-pdf"
+								data-bs-toggle="tooltip" data-bs-placement="top" title="Exportar a PDF" /> PDF</th>
+						<th scope="col"><font-awesome-icon icon="fa-solid fa-file-excel" class="icon-header-table icon-xml"
+								data-bs-toggle="tooltip" data-bs-placement="top" title="Exportar s Excel" /> XML</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr scope="row" v-for="(line, index) in obj_data.lines" :key="index">
+					<tr scope="row" v-for="(line, index) in obj_data.lines" :key="index" class="text-line">
 						<td>{{ index + 1 }}</td>
-						<td>XXXXX</td>
-						<td>XXXXX</td>
+						<td>{{ line.department }}</td>
+						<td>{{ line.category }}</td>
 						<td>{{ line.currency }}</td>
-						<td>{{ line.exchangerate }}</td>
-						<td>{{ line.amount }}</td>
-						<td>XXXXX</td>
-						<td>XXXXX</td>
+						<td><font-awesome-icon icon="fa-solid fa-coins" class="icon-header-table icon-coin"
+								data-bs-toggle="tooltip" data-bs-placement="top" /> {{ line.exchangerate }}</td>
+						<td><font-awesome-icon icon="fa-solid fa-dollar-sign" class="icon-header-table icon-dollar"
+								data-bs-toggle="tooltip" data-bs-placement="top" /> {{ line.amount }}</td>
+						<td><font-awesome-icon icon="fa-solid fa-dollar-sign" class="icon-header-table icon-dollar"
+								data-bs-toggle="tooltip" data-bs-placement="top" /> {{ line.taxamount }}</td>
+						<td><font-awesome-icon icon="fa-solid fa-dollar-sign" class="icon-header-table icon-dollar"
+								data-bs-toggle="tooltip" data-bs-placement="top" /> {{ line.grossamt }}</td>
 						<td>{{ line.memo }}</td>
-						<td><font-awesome-icon icon="fa-solid fa-file-pdf" class="icon-header-table icon-pdf"
-								data-bs-toggle="tooltip" data-bs-placement="top" title="Exportar a PDF" /></td>
-						<td><font-awesome-icon icon="fa-solid fa-file-excel" class="icon-header-table icon-xml"
-								data-bs-toggle="tooltip" data-bs-placement="top" title="Exportar s Excel" /></td>
+						<td><a :href="line.pdfUrl" target="__blank" class="input-style-link-line">{{ line.pdfName }}</a>
+						</td>
+						<td><a :href="line.xmlUrl" target="__blank" class="input-style-link-line">{{ line.xmlname }}</a>
+						</td>
 					</tr>
 				</tbody>
 			</table>
@@ -156,37 +186,84 @@ export default {
 	components: {},
 	setup() {
 		const store = useStore();
+		const urlApi = process.env.VUE_APP_URL_API_LOCAL;
 		const obj = ref(computed(() => store.state.infoList));
-		const obj_data = obj.value[0];
+		const obj_data = ref(obj.value[0]);
 		const userObj = ref(computed(() => store.state.user));
 		const loader_aprovee = ref(false);
+		const loader_rechazar = ref(false);
 		let button_aprovee = ref(`Aprobar`);
+		let button_rechazar = ref(`Rechazar`);
 		const toaster = createToaster({ position: "top", duration: 6000, type: "success" });
 		const showMessage = ref(false);
+		const importe = ref(0);
+
+		onMounted(() => {
+		});
 
 		const handleClickCancel = () => {
 			store.commit("setShowList");
 		};
+
+		const handleRejectExpense = async (id) => {
+			loader_rechazar.value = true;
+			button_rechazar.value = "Rechazando en NS...";
+			let objReports = {
+				"id": id,
+				"memo": obj_data.value.custbody_fc_nota_aprobacion,
+				"custbody_fc_cancelacion": true,
+				"supervisorapproval": false
+			}
+			await axios.put(`${urlApi}/api/mongo/report`, objReports)
+				.then(function (response) {
+					const data = response.data;
+					obj_data.value.status = "Rechazado";
+					obj_data.value.cancelacion = true;
+					console.log("isSuccessful", response.data);
+					toaster.show(`Reporte rechazado correctamente`);
+					showMessage.value = true;
+					button_rechazar.value = "Rechazar"
+					loader_rechazar.value = false;
+				})
+				.catch(function (error) {
+					console.log(error);
+					loader_rechazar.value = false;
+				});
+		}
 
 		const updateReport = async (id) => {
 			loader_aprovee.value = true;
 			button_aprovee.value = "Actualizando a NS..."
 			let objReports = {
 				"id": id,
-				"memo": "Prueba alejandro dentro app",
-				"custbody_fc_cancelacion": true
+				"memo": obj_data.value.custbody_fc_nota_aprobacion,
+				"custbody_fc_cancelacion": false,
+				"supervisorapproval": true
 			}
-			await axios.put('http://127.0.0.1:3000/api/mongo/report', objReports)
+			await axios.put(`${urlApi}/api/mongo/report`, objReports)
 				.then(function (response) {
+					axios.post(`${urlApi}/api/mongo/reports/new`, {})
+						.then(function (response) {
+							objReports = response.data.Reports;
+							store.commit("setListReport", objReports);
+							toaster.show(`Sincronización de reporte de gastos correcta`);
+						})
+						.catch(function (error) {
+							toasterFailed.show(`Ocurrio un error al sincronizar los reportes de gastos`);
+							console.log(error);
+						});
+					const data = response.data;
+					obj_data.value.status = "Pending Accounting Approval";
 					console.log("isSuccessful", response.data);
 					toaster.show(`Reporte actualizado correctamente`);
 					showMessage.value = true;
+					button_aprovee.value = "Aprobado"
+					loader_aprovee.value = false;
 				})
 				.catch(function (error) {
 					console.log(error);
+					loader_aprovee.value = false;
 				});
-			loader_aprovee.value = false;
-			button_aprovee.value = "Aprobar"
 		}
 
 		const closeMessage = () => {
@@ -199,9 +276,13 @@ export default {
 			userObj,
 			updateReport,
 			closeMessage,
+			handleRejectExpense,
 			loader_aprovee,
 			button_aprovee,
-			showMessage
+			loader_rechazar,
+			button_rechazar,
+			showMessage,
+			importe
 		}
 	}
 }
@@ -218,6 +299,12 @@ export default {
 	width: 200px;
 }
 
+.btn-rechazar {
+	margin-right: 10px;
+	background-color: #890909;
+	width: 200px;
+}
+
 .btn-cancelar {
 	margin-right: 10px;
 	background-color: #ececec;
@@ -226,6 +313,28 @@ export default {
 
 .input-style {
 	background-color: #ececec;
+	width: 80%;
+}
+
+.input-style-link {
+	background-color: #ffffff;
+	color: #0916899c;
+	width: 80%;
+
+	&:hover {
+		color: #091689;
+	}
+}
+
+.input-style-link-line {
+	color: #0916899c;
+
+	&:hover {
+		color: #091689;
+	}
+}
+
+.input-style-aprobacion {
 	width: 80%;
 }
 
@@ -267,21 +376,25 @@ export default {
 
 .icon-pdf {
 	color: #c95f61;
-	font-size: 25px;
-
-	:hover {
-		cursor: pointer;
-		color: #f69394;
-	}
+	font-size: 15px;
 }
 
 .icon-xml {
 	color: #4a8c6c;
-	font-size: 25px;
+	font-size: 15px;
+}
 
-	:hover {
-		cursor: pointer;
-		color: #69c699;
-	}
+.icon-dollar {
+	color: #317654;
+	font-size: 17px;
+}
+
+.icon-coin {
+	color: #daa520;
+	font-size: 17px;
+}
+
+.text-line {
+	font-size: 16px;
 }
 </style>
