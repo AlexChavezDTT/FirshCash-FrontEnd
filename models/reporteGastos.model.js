@@ -21,6 +21,18 @@ const reporteGastosShema = new mongoose.Schema({
 	},
 	entity: {
 		type: String
+	},
+	entity_id: {
+		type: Number
+	},
+	supervisor: {
+		type: Number
+	},
+	anticipo: {
+		type: Boolean
+	},
+	cancelacion: {
+		type: Boolean
 	}
 });
 

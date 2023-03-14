@@ -36,8 +36,6 @@ app.use((req, res, next) => {
 	next();
 });
 
-console.log("hola");
-
 //3) ROUTES
 app.get("/", (req, res) => {
 	//res.status(404);
@@ -46,6 +44,13 @@ app.get("/", (req, res) => {
 
 require("./routes/employees.routes")(app);
 require("./routes/reports.routes")(app);
+require("./routes/subsidiary.routes")(app);
+require("./routes/currencys.routes")(app);
+require("./routes/locations.routes")(app);
+require("./routes/deparments.routes")(app);
+require("./routes/categories.routes")(app);
+require("./routes/nexus.routes")(app);
+require("./routes/taxes.routes")(app);
 
 
 //4) START SERVER

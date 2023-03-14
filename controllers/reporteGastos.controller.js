@@ -22,6 +22,10 @@ exports.createReports = (req, res) => {
 					amount: objBody[i].amount,
 					statusref: objBody[i].statusref,
 					entity: objBody[i].entity,
+					entity_id: objBody[i].entity_id,
+					supervisor: objBody[i].supervisor,
+					anticipo: objBody[i].anticipo,
+					cancelacion: objBody[i].cancelacion,
 				});
 				reporteObj.save().then(doc => {
 					console.log("Save ✅:", doc);
@@ -126,32 +130,61 @@ exports.filterByEmployee = (req, res) => {
 	}
 }
 
+exports.getList = (req, res) => {
+	Reporte.find().then(doc => {
+		console.log(doc);
+		res.status(200);
+		res.send({ "message": "Login", "code": "200", "Reports": doc });
+	}).catch(err => {
+		console.log(err);
+		res.status(500);
+		res.send({ "message": "Some error ocurred.", "code": "500", "error": err });
+	})
+}
+
 exports.filterByOrd = (req, res) => {
 	const ord = req.params.ord;
 	const entity = req.params.entity;
 	const start_date = req.params.start_date;
 	const finish_date = req.params.finish_date;
+	const estatus = req.params.status;
 	let objfilter;
 	let objSort;
+	let estatusText;
+	if (estatus == 1) {
+		estatusText = "pendingSupApproval";
+	}
+	if (estatus == 2) {
+		estatusText = "pendingAcctApproval";
+	}
 	if (entity == 0) {
-		objfilter = { $and: [{ trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }] };
+		if (estatus == 0) {
+			objfilter = { $and: [{ trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }] };
+		} else {
+			objfilter = { $and: [{ trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }, { statusref: estatusText }] };
+		}
 		if (ord == 0) {
 			objSort = { internalid: -1 };
 		} else if (ord == 1) {
 			objSort = { internalid: 1 };
 		}
 	} else {
-		objfilter = { $and: [{ entity: entity }, { trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }] };
+		if (estatus == 0) {
+			objfilter = { $and: [{ entity_id: entity }, { trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }] };
+		} else {
+			objfilter = { $and: [{ entity_id: entity }, { trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }, { statusref: estatusText }] };
+		}
 		if (ord == 0) {
 			objSort = { internalid: -1 };
 		} else if (ord == 1) {
 			objSort = { internalid: 1 };
 		}
 	}
+	console.log("filter", objfilter);
 	Reporte.find(objfilter).sort(objSort).then(doc => {
 		console.log(doc);
 		res.status(200);
-		res.send({ "message": "Login", "code": "200", "Reports": doc });
+		res.send({ "message": "List", "code": "200", "Reports": doc });
 	}).catch(err => {
 		console.log(err);
 		res.status(500);
@@ -163,6 +196,9 @@ exports.filterByEmployeeAndDates = (req, res) => {
 	const entity = req.params.entity;
 	const start_date = req.params.start_date;
 	const finish_date = req.params.finish_date;
+	const estatus = req.params.status;
+	let estatusText;
+	let filter;
 	if (entity == 0) {
 		Reporte.find().then(doc => {
 			console.log(doc);
@@ -174,7 +210,20 @@ exports.filterByEmployeeAndDates = (req, res) => {
 			res.send({ "message": "Some error ocurred.", "code": "500", "error": err });
 		})
 	} else {
-		Reporte.find({ $and: [{ entity: entity }, { trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }] }).then(doc => {
+		if (estatus == 0) {
+			filter = { $and: [{ entity_id: entity }, { trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }] };
+		}
+		if (estatus == 1) {
+			estatusText = "pendingSupApproval";
+			filter = { $and: [{ entity_id: entity }, { trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }, { statusref: estatusText }] };
+		}
+		if (estatus == 2) {
+			estatusText = "pendingAcctApproval";
+			filter = { $and: [{ entity_id: entity }, { trandate: { $gt: new Date(start_date) } }, { trandate: { $lt: new Date(finish_date) } }, { statusref: estatusText }] };
+		}
+		console.log("entro");
+		console.log("filter", filter)
+		Reporte.find(filter).then(doc => {
 			console.log(doc);
 			res.status(200);
 			res.send({ "message": "Login", "code": "200", "Reports": doc });

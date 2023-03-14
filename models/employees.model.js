@@ -18,6 +18,9 @@ const EmployeeSchema = new mongoose.Schema({
 	},
 	location: {
 		type: Number
+	},
+	supervisor: {
+		type: Number
 	}
 });
 

@@ -10,31 +10,38 @@ exports.createEmployees = (req, res) => {
 	employeesObj.get({ user: "jaime" }).then(function (body) {
 		const objBody = body;
 		console.log(objBody.length);
-		Employees.deleteMany().then(doc => {
-			for (let i in objBody) {
-				const employeeObj = new Employees({
-					internalid: objBody[i].internalid,
-					entityid: objBody[i].entityid,
-					email: objBody[i].email,
-					custentity_fc_password_integration: objBody[i].custentity_fc_password_integration,
-					subsidiary: objBody[i].subsidiary,
-					location: objBody[i].location
-				});
-				employeeObj.save().then(doc => {
-					console.log("Save ✅:", doc);
-				}).catch(err => {
-					console.log("Error 😱:", err)
-				});
-			}
-		}).catch(err => {
-			console.log(err);
-		});
+		for (let i in objBody) {
+			Employees.findOne({ internalid: objBody[i].internalid }).then(function (body) {
+				if (body == null) {
+					const employeeObj = new Employees({
+						internalid: objBody[i].internalid,
+						entityid: objBody[i].entityid,
+						email: objBody[i].email,
+						custentity_fc_password_integration: objBody[i].custentity_fc_password_integration,
+						subsidiary: objBody[i].subsidiary,
+						location: objBody[i].location,
+						supervisor: objBody[i].supervisor
+					});
+					employeeObj.save().then(doc => {
+						console.log("Save ✅:", doc);
+					}).catch(err => {
+						console.log("Error 😱:", err)
+					});
+				} else if ('internalid' in body) {
+					Employees.updateOne({ internalid: objBody[i].internalid }, objBody[i]).then(function (body) {
+						console.log("Updated ✅:", body);
+					}).catch(function (error) {
+						console.log("Error 😱:", error)
+					});
+				}
+			})
+		}
 		res.status(200);
 		res.send({ "message": "Get employees", "code": "200", "Employees": body });
 	}).catch(function (error) {
 		console.log("Error 😱:", error)
 		res.status(500);
-		res.send({ "message": "Some error ocurred.", "code": "500", "error": error });
+		res.send({ "message": "Ocurrio un error", "code": "500", "error": error });
 	})
 }
 
